@@ -1,12 +1,13 @@
 ---
-title: ML1020 Machine Learning at Scale - Winter 2019
+title: "ML1020 Machine Learning at Scale - Winter 2019"
 author:
-  - name: Vadim Spirkov
-    affiliation: York University School of Continuing Studies
-  - name: Murlidhar Loka
-    affiliation: York University School of Continuing Studies
-abstract: >
- The main objective of this project work is the case study of urban sounds audio event identification and classification. This is a supervised learning where we will be working on an audio event dataset with samples of audio data that belong to specific categories (which are the sources of the sounds).
+- affiliation: York University School of Continuing Studies
+  name: Vadim Spirkov
+- affiliation: York University School of Continuing Studies
+  name: Murlidhar Loka
+output: pdf_document
+abstract: |
+  The main objective of this project work is the case study of urban sounds audio event identification and classification. This is a supervised learning where we will be working on an audio event dataset with samples of audio data that belong to specific categories (which are the sources of the sounds).
 ---
 
 ```{r echo=FALSE, message=FALSE, warnings=FALSE}
@@ -40,10 +41,9 @@ This file contains meta-data information about every audio file in the dataset.T
 
 **Slice_file_name**  
 The name of the audio file. The name takes the following format: [fsID]-[classID]-[occurrenceID]-[sliceID].wav, where:
-[fsID] = the Freesound ID of the recording from which this excerpt (slice) is taken
-[classID] = a numeric identifier of the sound class (see description of classID below for further details)
-[occurrenceID] = a numeric identifier to distinguish different occurrences of the sound within the original recording
-[sliceID] = a numeric identifier to distinguish different slices taken from the same occurrence
+
+**sliceID**
+A numeric identifier to distinguish different slices taken from the same occurrence
 
 **fsID**  
 The Freesound ID of the recording from which this excerpt (slice) is taken
@@ -141,7 +141,7 @@ Considering the fact that the audio files have different length we will sample e
 All the audio files were resampled applying 22050hz sample rate and convert all the files to mono.
 
 
-## Feature Engineering
+### Feature Engineering
 
 Now let's ponder about the features we would have to extract to design a robust classifier. In the past Mel-frequency cepstral coefficients (MFCCs) were considered the best to classify the audio. With the expansion of the Neural Networks multiple research works prove that log-scaled mel spectrogram is superior to other features extraction techniques.
 
@@ -165,15 +165,15 @@ It seams that the first approach dose not add more data to the model to analyze.
 
 
 
-# Feature Extraction Model (VGG16)
+## Feature Extraction Model (VGG16)
 
 
-# Multiclass Classification Model  
+## Multiclass Classification Model  
 The classification model will be dealing with the one-dimensional feature vector of size 4608 The output layer is going to be a softmax layer with ten outputs - one for each class.
 
 The classification task seems to be pretty trivial. We will be employing a multi-layer dense perceptron with Adam optimizer and categorical cross-entropy loss function. We will insert a few drop layers between the dense ayer to avoid model over-fitting.
 
-# Full Production Pipeline in Action  
+## Full Production Pipeline in Action  
 
 
 ![Training Accuracy and Loss Graphs](images/trainingAccuracyLoss.png)
@@ -183,12 +183,12 @@ The classification task seems to be pretty trivial. We will be employing a multi
 ![Precision/Recall...](images/precisionAndRecall.png)
 
 
-# Conclusion
+## Conclusion
 
 
 
 \bibliography{RJreferences}
 
-# Note from the Authors
+## Note from the Authors
 
 This file was generated using [_The R Journal_ style article template](https://github.com/rstudio/rticles), additional information on how to prepare articles for submission is here - [Instructions for Authors](https://journal.r-project.org/share/author-guide.pdf). The article itself is an executable R Markdown file that could be [downloaded from Github](https://github.com/ivbsoftware/big-data-final-2/blob/master/docs/R_Journal/big-data-final-2/) with all the necessary artifacts.
