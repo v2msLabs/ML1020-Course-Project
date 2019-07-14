@@ -5,7 +5,9 @@ author:
   name: Vadim Spirkov
 - affiliation: York University School of Continuing Studies
   name: Murlidhar Loka
-output: pdf_document
+output:
+  html_document:
+    df_print: paged
 abstract: |
   The main objective of this project work is the case study of urban sounds audio event identification and classification. This is a supervised learning where we will be working on an audio event dataset with samples of audio data that belong to specific categories (which are the sources of the sounds).
 ---
@@ -165,7 +167,16 @@ It seams that the first approach dose not add more data to the model to analyze.
 
 
 
-## Feature Extraction Model (VGG16)
+## Feature Extraction Model (VGG16)  
+
+
+![VGG16 Model Architecture](images/vgg16ModelArch.png)
+
+The VGG-16 model is a 16-layer (convolution and fully connected) network built on the ImageNet database, which is built for the purpose of image recognition and classification. This model was built by Karen Simonyan and Andrew Zisserman.
+we have a total of 13 convolution layers using 3 x 3 convolution filters along with max pooling layers for downsampling and a total of two fully connected hidden layers of 4096 units in each layer followed by a dense layer of 1000 units, where each unit represents one of the image categories in the ImageNet database.
+The first 5 layers can be used for features extraction.
+
+
 
 
 ## Multiclass Classification Model  
@@ -187,7 +198,10 @@ The classification task seems to be pretty trivial. We will be employing a multi
 
 
 
-\bibliography{RJreferences}
+## References
+
+https://towardsdatascience.com/a-comprehensive-hands-on-guide-to-transfer-learning-with-real-world-applications-in-deep-learning-212bf3b2f27a
+
 
 ## Note from the Authors
 
