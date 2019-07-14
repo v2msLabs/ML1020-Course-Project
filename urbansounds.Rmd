@@ -184,6 +184,8 @@ The classification model will be dealing with the one-dimensional feature vector
 
 The classification task seems to be pretty trivial. We will be employing a multi-layer dense perceptron with Adam optimizer and categorical cross-entropy loss function. We will insert a few drop layers between the dense ayer to avoid model over-fitting.
 
+![Keras Model Visualization...](images/keras_model_plot.png)
+
 ## Full Production Pipeline in Action  
 
 
