@@ -72,16 +72,16 @@ The fold number (1-10) to which this file has been allocated.
 ### classID
 A numeric identifier of the sound class:
 
-0 = air_conditioner
-1 = car_horn
-2 = children_playing
-3 = dog_bark
-4 = drilling
-5 = engine_idling
-6 = gun_shot
-7 = jackhammer
-8 = siren
-9 = street_music
+    0 = air_conditioner
+    1 = car_horn
+    2 = children_playing
+    3 = dog_bark
+    4 = drilling
+    5 = engine_idling
+    6 = gun_shot
+    7 = jackhammer
+    8 = siren
+    9 = street_music
 
 
 ## Data Exploration
@@ -96,7 +96,7 @@ Employing the meta-data file content and the audio samples we will try to gain b
 
 We begin with counting the number of observations per category.
 
-```{r  out.width = "100%", echo=FALSE, fig.align='center', fig.cap="Number of Observations Per Category"}
+```{r  out.width = "70%", echo=FALSE, fig.align='center', fig.cap="Number of Observations Per Category"}
 include_graphics("../images/classPopulation.png") 
 ```
 
@@ -190,7 +190,7 @@ The output  of the model is a one-dimensional feature vector of size **4608**. T
 Considering everything said above this is a diagram of the production data pipeline
 
 ```{r pipeline, out.width = "100%", echo=FALSE, fig.align='center', fig.cap="Production Pipeline"}
-#include_graphics("../images/VGG-16_architecture.png") 
+include_graphics("../images/pipeline.png") 
 ```
 
 # Classification Model
@@ -208,17 +208,19 @@ GCP offers many way to achieve the same goal. We frankly have been overwhelmed w
 
 ## Training
 
-The model training was done using 50 epochs, with the batch size of 256 and validation split of 25% of the training dataset. 
+The model training was done using 50 epochs, with the batch size of 256 and validation set of 25% of the training dataset. For illustration purposes we present the model training graph.
 
 ```{r grah, out.width = "100%", echo=FALSE, fig.align='center', fig.cap="Model Training Graph"}
 include_graphics("../images/model_graph.png") 
 ```
 
-Let's review model training and validation curves
+Let's review the model training and validation curves, which will help us to evaluate how well the model is fitted and if there are ways to improve it. According to figure \ref{fig:loss} training and validation accuracy are nicely converging, which is a sign that the model has learned the data well. Both curves lay in close proximity and follow each other. It means the the training and validation sets are representative, meaning they contain all the features of the original dataset.The training and validation loss curves on the right hand side, have converged and plateaued. It means that further training will most likely lead to overfitting.
 
 ```{r loss, out.width = "100%", echo=FALSE, fig.align='center', fig.cap="Model Training and Validation Curves"}
 include_graphics("../images/Audio_DNN_train_val_curves.png") 
 ```
+
+Lastly we are going to evaluate the confusion matrix of the classifier. And it is quite impressive! All averaged F1 scores show **85%** accuracy on a training set. This is quite remarkable considering how simple the classifier model is. Power of transfer learning in action! The least successful categories are `Children Playing`, `Dog Bark` and `Steet Music`. All scored i mid/high seventies. The lower ability to classy `Children Playing` and `Street Music` could be explained by the complexity of the sound. Probably more samples would help to improve the classifier. We are not sure why `Dog Bark` category has a lower score.  
 
 ```{r heat, out.width = "100%", echo=FALSE, fig.align='center', fig.cap="Classifier Confusion Matrix"}
 include_graphics("../images/Audio_DNN_heatmap.png") 
@@ -242,9 +244,10 @@ include_graphics("../images/Audio_DNN_heatmap.png")
     weighted avg       0.85      0.85      0.85     32725
 
 
+
 # Conclusion
 
-
+Our research proves that having even modest computational resources it is possible to classify urban sounds with the high degree of accuracy. Through exploration of almost 9000 audio samples we have extracted useful features, which we employed to train the sound classification model. We have confirmed that the data augmentation is an excellent tool to balance the unbalanced datasets or even boost the size of the small dataset. We have demonstrated the power of the transfer learning, which makes training o high accuracy models with limited resources possible.
 
 
 \bibliography{RJreferences}
