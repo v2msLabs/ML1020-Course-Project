@@ -1,0 +1,17 @@
+                  precision    recall  f1-score   support
+
+ Air Conditioner       0.83      0.93      0.87      3977
+        Car Horn       0.95      0.78      0.86      1998
+Children Playing       0.69      0.77      0.73      4009
+        Dog Bark       0.91      0.65      0.76      3084
+        Drilling       0.89      0.88      0.88      3492
+   Engine Idling       0.89      0.93      0.91      3877
+        Gun Shot       0.85      0.89      0.87      1038
+      Jackhammer       0.95      0.92      0.94      3571
+           Siren       0.92      0.90      0.91      3656
+    Street Music       0.75      0.79      0.77      4023
+
+       micro avg       0.85      0.85      0.85     32725
+       macro avg       0.86      0.84      0.85     32725
+    weighted avg       0.85      0.85      0.85     32725
+
