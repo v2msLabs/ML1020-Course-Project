@@ -159,8 +159,8 @@ Taking into consideration the finding discovered during the data exploration pha
 * As it was noted the length of the audio samples varies from 0.1 to 4 seconds. To preserve as much data as possible we will apply a sub-sampling technique known as a *sliding window approach*. 
 
     * We select a window size of **0.5** seconds, which we use against each audio sample to slice it into 0.5-long audio segments.
-    * The window will be moving from the beginning of the audio file to the end with overlap of 0.35 seconds.
-    * Most of the times the sliding window would not cut the audio file precisely from the beginning to the end. Thus the last slice will be taken from the and f the audio sample.
+    * The window will be moving from the beginning of the audio file to the end with overlap of 0.25 seconds.
+    * Most of the times the sliding window would not cut the audio file precisely from the beginning to the end. Thus the last slice will be taken from the end of the audio sample.
     * This approach will result in getting multiple overlapping samples from each audio file.
     
 
