@@ -1,0 +1,3 @@
+gcloud ai-platform local train --package-path trainer --module-name trainer.task --job-dir output
+
+gcloud ai-platform jobs submit training train4 --package-path trainer --module-name trainer.task --job-dir gs://ml-1020/ --python-version 3.5 --runtime-version 1.13 --scale-tier PREMIUM_1
