@@ -1,0 +1,682 @@
+% !TeX root = RJwrapper.tex
+\title{Urban Sound Classification}
+\author{by Vadim Spirkov, Murlidhar Loka}
+
+\maketitle
+
+\abstract{%
+Cities are significantly noisier than rural areas. Almost a third of
+Europe's population lives in areas where noise levels exceed the 55
+decibel sound limit recommended by the World Health Organisation.Until
+recently, urban noise was considered a mere annoyance, a by-product of
+living in close quarters on busy streets. Yet new research in Denmark
+funded by the European Research Council demonstrates that it causes
+stress, disturbed sleep, serious illness, and can even increase the risk
+of heart attack or stroke.(Ref: \cite{combatnoise})
+}
+
+% Any extra LaTeX you need in the preamble
+
+\hypertarget{background}{%
+\subsection{Background}\label{background}}
+
+Considering the harmful effect of the urban noise on people the
+classification of the urban sounds my be used to identify which
+particular kind of noise is the most disturbing. Knowing this the
+architects and builders may come-up with the better sound insulation
+materials and building designs to shield the dwellers from for the most
+distractive sounds. The machinery manufacturers could produce better
+soundproofed equipment\ldots{}
+
+\hypertarget{objective}{%
+\subsection{Objective}\label{objective}}
+
+Objective of this research is to build a robust urban sound classifier
+leveraging concepts from transfer learning and deep learning. The model
+should be able to deal with the sound samples of various duration,
+number of channels and sample rate. The model should work fast enough to
+classify the sound samples in real-time.
+
+\hypertarget{github}{%
+\subsection{GitHub}\label{github}}
+
+The project source code, presentation and other artifacts could be found
+on \href{https://github.com/v2msLabs/ML1020-Course-Project}{GitHub}
+
+\hypertarget{data-analysis}{%
+\section{Data Analysis}\label{data-analysis}}
+
+This research employs the data set sourced from
+\href{https://urbansounddataset.weebly.com/urbansound8k.html}{UrbanSounddataset}.
+This dataset contains \textbf{8732} labeled sound excerpts
+(\textless{}=4s) of urban sounds from 10 classes. The classes are drawn
+from the urban sound taxonomy. The files are pre-sorted into ten folds
+(folders named fold1-fold10) to help in the reproduction of and
+comparison with the automatic classification results. We will follow a
+standard workflow of analyzing, visualizing, modeling, and evaluating
+our models on our audio data.
+
+\hypertarget{data-dictionary}{%
+\subsection{Data Dictionary}\label{data-dictionary}}
+
+\hypertarget{audio-files}{%
+\subsubsection{Audio Files}\label{audio-files}}
+
+8732 audio files (6 GB) of urban sounds (see description above) in WAV
+format. The sampling rate, bit depth, and number of channels are the
+same as those of the original file uploaded to Freesound (and hence may
+vary from file to file).
+
+The name of the audio file. The name takes the following format:
+\emph{{[}fsID{]}-{[}classID{]}-{[}occurrenceID{]}-{[}sliceID{]}.wav}. We
+are primarily interested in \texttt{classID} - a numeric identifier of
+the sound class. There are ten sound categories, namely:
+
+\begin{verbatim}
+0 = air_conditioner
+1 = car_horn
+2 = children_playing
+3 = dog_bark
+4 = drilling
+5 = engine_idling
+6 = gun_shot
+7 = jackhammer
+8 = siren
+9 = street_music
+\end{verbatim}
+
+\hypertarget{meta-data-file}{%
+\subsubsection{Meta-data File}\label{meta-data-file}}
+
+This file contains meta-data information about every audio file in the
+dataset.This includes:
+
+\hypertarget{data-exploration}{%
+\subsection{Data Exploration}\label{data-exploration}}
+
+Let's begin our data exploration exercise checking the content of the
+meta-data file supplied with the audio samples:
+
+\begin{Schunk}
+\begin{figure}[H]
+
+{\centering \includegraphics[width=0.5\linewidth]{../images/metadata20} 
+
+}
+
+\caption[The Meta-data File Content Sample]{The Meta-data File Content Sample}\label{fig:unnamed-chunk-2}
+\end{figure}
+\end{Schunk}
+
+Employing the meta-data file content and the audio samples we will try
+to gain better understanding of the data we are dealing with. This
+knowledge will help us to prepare data for model training.
+
+We begin with counting the number of observations per category.
+
+\begin{Schunk}
+\begin{figure}[H]
+
+{\centering \includegraphics[width=0.7\linewidth]{../images/classPopulation} 
+
+}
+
+\caption[Number of Observations Per Category]{Number of Observations Per Category}\label{fig:unnamed-chunk-3}
+\end{figure}
+\end{Schunk}
+
+As per the plot submitted above we can see that the \textbf{Gun Shot}
+and \textbf{Car Horn} categories are underpopulated; the data set is not
+balanced. To balance the dataset we could:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Upsample these categories
+\item
+  Downsample the populous categories
+\item
+  Add more labelled observations to the smaller categories
+\item
+  Leave the data set as is hoping that the categories with the smaller
+  population will be large enough to train the network
+\end{enumerate}
+
+We decided to go with option \textbf{1} since it gives us the best
+quality. But now we face a question how to upsample the audio. The
+answer is sound augmentation. We can take the existing audio samples and
+alter them adding noise, changing the pitch and time shift. This
+technique proved to be very effective to improve the accuracy of the
+models.
+
+Now it is time to take a look at the audio sample rate distribution. As
+shown in figure \ref{fig:sampled} the sample rate of the sound files
+varies. We would have to re-sample the original data to bring it to the
+same standard.
+
+\begin{Schunk}
+\begin{figure}[H]
+
+{\centering \includegraphics[width=1\linewidth]{../images/sampleRate} 
+
+}
+
+\caption[Audio Sample Rate Distribution]{Audio Sample Rate Distribution}\label{fig:sampled}
+\end{figure}
+\end{Schunk}
+
+Let's calculate the length of the sound samples.
+
+\begin{Schunk}
+\begin{figure}[H]
+
+{\centering \includegraphics[width=1\linewidth]{../images/durationOfSoundFiles} 
+
+}
+
+\caption[Audio Length Distribution]{Audio Length Distribution}\label{fig:lengthd}
+\end{figure}
+\end{Schunk}
+
+The majority of the sound files are \textbf{4} second long (fig:
+\ref{fig:lengthd}). But there are some file that are less than a second
+long. Designing the model we would have to make sure that the input
+layer is able to deal with the sound samples of various length and a
+sample rate. We might also want to filter out the samples that less than
+\textbf{0.5} second long, because most likely they do not carry much of
+valuable information.
+
+Lastly we are going to verify how many channels the recorded audio file
+have (stereo vs.~mono)
+
+\begin{Schunk}
+\begin{figure}[H]
+
+{\centering \includegraphics[width=0.5\linewidth]{../images/audio_channels} 
+
+}
+
+\caption[Mono vs]{Mono vs. Stereo Sample Distribution}\label{fig:channeld}
+\end{figure}
+\end{Schunk}
+
+Just a few audio files were recorded in mono. Though each stereo channel
+carries slightly different information for the sake of simplicity we
+will be converting each audio sample to monophonic.
+
+\hypertarget{sound-characteristics-of-each-category}{%
+\subsubsection{Sound Characteristics of Each
+Category}\label{sound-characteristics-of-each-category}}
+
+To successfully classify the urban sounds each sound category must have
+distinctive features. Applying audio feature extraction library
+\textbf{librosa} (Ref: \cite{librosa}) we are going to take a look at
+one sample from each category to witness the difference.
+
+The most common and well understood audio chart is a
+\texttt{waveform\ amplitude\ plot}. The pattern of variations contained
+in the waveforms gives us information about the signal.
+
+\begin{Schunk}
+\begin{figure}[H]
+
+{\centering \includegraphics[width=1\linewidth]{../images/graphsOfAudioFiles} 
+
+}
+
+\caption[Waveforms of Sounds from All Ten Categories]{Waveforms of Sounds from All Ten Categories}\label{fig:waveform}
+\end{figure}
+\end{Schunk}
+
+Looking at the waveforms rendered in figure: \ref{fig:waveform} we can
+observe that some sounds have very distinctive shape. On the other hand
+the plot of the \textbf{air conditioner} and \textbf{jackhammer} are
+somewhat similar. Is there a better way to pick the distinctive sound
+features? In fact over time the sound engineers and scientist came up
+with many way to describe the unique characteristics of the sound. We
+have decided to employ \textbf{Mel spectrogram}. Mel frequency
+spectrogram is a lossless presentation of a signal that gives an
+acoustic time-frequency representation of a sound: the power spectral
+density. It is sampled into a number of points around equally spaced
+times and frequencies (on a Mel frequency scale). The Mel scale is a
+\textbf{perceptual} scale of pitches judged by listeners to be equal in
+distance from one another.
+
+\begin{Schunk}
+\begin{figure}[H]
+
+{\centering \includegraphics[width=1\linewidth]{../images/melSpecGraphs} 
+
+}
+
+\caption[Mel Spectrograms of Sounds from All Ten Categories]{Mel Spectrograms of Sounds from All Ten Categories}\label{fig:mel}
+\end{figure}
+\end{Schunk}
+
+As we can see the Mel spectrograms have more features than the
+amplitude/time waveform presentation. Now the distinction between the
+the \textbf{air conditioner} and \textbf{jackhammer}r is much clearer.
+Since the spectrograms are lossless they could be used to train the
+Neural Networks!
+
+\hypertarget{data-preparation}{%
+\section{Data Preparation}\label{data-preparation}}
+
+Taking into consideration the finding discovered during the data
+exploration phase we are ready to design a dataset preparation and
+feature extraction approach.
+
+\begin{itemize}
+\item
+  Firstly we shall balance the data set employing sound augmentation
+  techniques as previously discussed.
+\item
+  We re-sample all audio using a sample rate of \textbf{22050 Hz}
+\item
+  All sound samples will be converted to \textbf{mono}
+\item
+  As it was noted the length of the audio samples varies from 0.1 to 4
+  seconds. To preserve as much data as possible we will apply a
+  sub-sampling technique known as a \emph{sliding window approach}.
+
+  \begin{itemize}
+  \tightlist
+  \item
+    We select a window size of \textbf{0.5} seconds, which we use
+    against each audio sample to slice it into 0.5-long audio segments.
+  \item
+    The window will be moving from the beginning of the audio file to
+    the end with overlap of 0.25 seconds.
+  \item
+    Most of the times the sliding window would not cut the audio file
+    precisely from the beginning to the end. Thus the last slice will be
+    taken from the end of the audio sample.
+  \item
+    This approach will result in getting multiple overlapping samples
+    from each audio file.
+  \end{itemize}
+\end{itemize}
+
+\hypertarget{feature-extraction}{%
+\section{Feature Extraction}\label{feature-extraction}}
+
+Now let's ponder about the features we would have to extract to design a
+robust classifier. Long before the neural networks gained their
+popularity the scientist had already come up with pretty accurate
+methods to classify the sound. The star feature of the time was
+\textbf{Mel-frequency cepstral coefficients (MFCCs)} (Ref:
+\cite{mfccmodel}). With the expansion of the Neural Networks multiple
+research works demonstrate that \textbf{log-scaled Mel spectrogram} is
+superior to the other features extraction techniques in the context of
+deep learning models (Ref: \cite{audiosignal}).
+
+Our feature extraction approach is based on the latest scientific
+findings and largely inspired by the ``Hands-On Transfer Learning with
+Python'' book (\cite{transfer}). Below we outline our feature extraction
+sequence.
+
+To capture more data we are going to use \textbf{96-band} Mel
+spectrogram over \textbf{96} frames for each audio sample. When the
+spectrogram is extracted we can use it as an input for a Convolutional
+Neural Network. In the end the spectrograms could be rendered as an
+image. The CNN would learns the features of the spectrograms and then
+classify them. But there is a better approach\ldots{} There are
+literally dozens of pre-trained models. Thousand hours have been spent
+on the model training and design. Can we take advantage of this work?
+Absolutely!
+
+We are going to employ \textbf{VGG-16} convolutional neural network
+trained on millions of images from ``imagenet'' to learn the features of
+the Mel spectrograms, which we described just a moment ago. We would
+have to modify the VGG-16 architecture, namely:
+
+\begin{itemize}
+\tightlist
+\item
+  We shape the input layer as follows: \({96} * {96} * {3}\)
+\item
+  We drop the softmax output layer
+\item
+  We flatten the last layer of the network
+\end{itemize}
+
+Here is the the modified VGG-16 architecture:
+
+\begin{Schunk}
+\begin{figure}[H]
+
+{\centering \includegraphics[width=0.3\linewidth]{../images/VGG-16_architecture} 
+
+}
+
+\caption[VGG-16 Architecture]{VGG-16 Architecture}\label{fig:vgg}
+\end{figure}
+\end{Schunk}
+
+The output of the model is a one-dimensional feature vector of size
+\textbf{4608}. There is one small issue though. VGG-16 is trained on the
+three-channel (RGB) images. In our case we have only one \({96} * {96}\)
+matrix. We can consider a few solutions\ldots{} The first one is to
+extract two more features. The best candidates would probably be
+\emph{Harmonic} and \emph{Percussion} sequences. But earlier in the
+paper we have noted that the Mel spectrograms are lossless. Addition of
+new feature would undoubtedly make negative performance impact, but
+would it add more data? We do not believe so. Thus we decide to
+replicate the same matrix three times.
+
+\hypertarget{production-pipeline}{%
+\subsection{Production Pipeline}\label{production-pipeline}}
+
+Considering everything said above this is a diagram of the production
+data pipeline
+
+\begin{Schunk}
+\begin{figure}[H]
+
+{\centering \includegraphics[width=1\linewidth]{../images/pipeline} 
+
+}
+
+\caption[Production Pipeline]{Production Pipeline}\label{fig:pipeline}
+\end{figure}
+\end{Schunk}
+
+\hypertarget{classification-model}{%
+\section{Classification Model}\label{classification-model}}
+
+Heavily relying on the power of the transfer learning our classifier is
+going to be rather simple. It is a dense neural network that has input
+layer of size \textbf{4608} that matches the output of the VGG-16 NN.
+The classifier has a few dropout layers to fight the overfitting. The
+output layer of the classifier has softmax activation function with ten
+outputs - one for each sound category. As you may recall we started with
+8736 audio files of various length. After data processing and feature
+extraction steps we ended-up with the dataset of \textbf{130899} rows
+and \textbf{4608} columns!
+
+\begin{Schunk}
+\begin{figure}[H]
+
+{\centering \includegraphics[width=0.3\linewidth]{../images/classifier_model} 
+
+}
+
+\caption[Classification Model]{Classification Model}\label{fig:classifier}
+\end{figure}
+\end{Schunk}
+
+\hypertarget{model-deployment-and-training-on-google-cloud-platform}{%
+\section{Model Deployment and Training on Google Cloud
+Platform}\label{model-deployment-and-training-on-google-cloud-platform}}
+
+GCP offers many ways to achieve the same goal. We frankly have been
+overwhelmed with the number of available articles and training
+materials, which in fact made the things more confusing than helpful. We
+have spent considerable amount of time studying various approaches. As
+it has been previously discussed our processing pipeline is quite
+complex. To implement it on the cloud we have designed the following
+workflow\ldots{}
+
+\hypertarget{grand-design}{%
+\subsection{Grand Design}\label{grand-design}}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Upload audio file to a GCP bucket.
+\item
+  Run data normalization and feature extraction job on GCP AI Platform
+\item
+  Save the output of the job as a pickle file in a temporary folder of
+  the bucket.
+\item
+  Develop a serverless GCP function to learn the features employing
+  VGG-16. The pickle files produced by the AI job would be used as input
+  for VGG-16. The function would be triggered by the storage event in
+  reaction to the creation of the feature pickle file. Dump the pickle
+  file with the learned features
+\item
+  Develop a serverless function to train the classification model.
+  Similarly to step 4 trigger the function execution propagating a
+  storage event. Use the pickle file with learnt features as input
+\end{enumerate}
+
+\hypertarget{reality}{%
+\subsection{Reality}\label{reality}}
+
+As it turned out it was a formidable task to implement the proposed
+above design. It could have taken weeks to develop such pipeline even
+for experienced GCP developers. Thus, considering the time constraints
+and luck of experience dealing with GCP we have come up with a hybrid
+approach.
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  To do data normalization and feature extraction we developed a
+  configurable Python script that would take the original audio samples
+  as input and produce a pickle file of features and labels as an
+  output. We run a few of these files simultaneously on a PC. Each file
+  took care of the portion of the audio files and process them creating
+  the pickle files.
+\item
+  As a result of the step one we ended up with 11 feature and
+  corresponding 11 label files. Then we developed and ran the feature
+  learning jobs employing VGG-16 model. Each job would take a pickle
+  feature file produced by the feature extraction jobs at the step one.
+  The outcome of these processes were 11 pickle files with the learnt
+  features. The feature learning jobs we run simultaneously on a PC
+\item
+  Then we ran the \textbf{stacker} script in a local environment to
+  consolidate 11 pickle files with the learnt features into one files
+  and corresponding 11 label files into another file.
+\item
+  We uploaded the pickle files produced at step \# 3 to GCP bucket
+\item
+  Lastly we developed and run a model training job on GCP AI Platform
+\end{enumerate}
+
+The diagram submitted below illustrates the process
+
+\begin{Schunk}
+\begin{figure}[H]
+
+{\centering \includegraphics[width=1\linewidth]{../images/PipelineImplementation} 
+
+}
+
+\caption[Pipeline Implementation]{Pipeline Implementation}\label{fig:impl}
+\end{figure}
+\end{Schunk}
+
+\hypertarget{training}{%
+\subsection{Training}\label{training}}
+
+We have opted to employ \textbf{GCP AI Platform} job to train the model.
+The advantage of this approach is a zero hardware configuration effort.
+The AI platform takes care of the job scaling. We selected a scale tier
+of \textbf{PREMIUM\_1}, which comprises:
+
+\begin{itemize}
+\tightlist
+\item
+  One master instance
+\item
+  19 workers
+\item
+  11 parameter servers
+\end{itemize}
+
+Compute Engine machine name, master: n1-highcpu-16, workers:
+n1-highcpu-16, parameter servers: n1-highmem-8
+
+The model training was done using 50 epochs, with the batch size of 256
+and validation set size equaled to 25\% of the training dataset. We
+chose Adam optimizer and opted to employ learning rate decay. The
+following group of diagrams show the GCP training job statistics.
+
+\begin{Schunk}
+\begin{figure}[H]
+
+{\centering \includegraphics[width=0.8\linewidth]{../images/graph} 
+
+}
+
+\caption[Model Training Graph]{Model Training Graph}\label{fig:grah}
+\end{figure}
+\end{Schunk}
+
+\begin{Schunk}
+\begin{figure}[H]
+
+{\centering \includegraphics[width=1\linewidth]{../images/job_network} 
+
+}
+
+\caption[Job Network Traffic]{Job Network Traffic}\label{fig:net}
+\end{figure}
+\end{Schunk}
+
+\begin{Schunk}
+\begin{figure}[H]
+
+{\centering \includegraphics[width=1\linewidth]{../images/job_master_cpu} 
+
+}
+
+\caption[Master Server CPU and Memory Utilization]{Master Server CPU and Memory Utilization}\label{fig:master}
+\end{figure}
+\end{Schunk}
+
+\begin{Schunk}
+\begin{figure}[H]
+
+{\centering \includegraphics[width=1\linewidth]{../images/job_parameter_server_cpu} 
+
+}
+
+\caption[Parameter Servers CPU and Memory Utilization]{Parameter Servers CPU and Memory Utilization}\label{fig:param}
+\end{figure}
+\end{Schunk}
+
+\begin{Schunk}
+\begin{figure}[H]
+
+{\centering \includegraphics[width=1\linewidth]{../images/job_worker_cpu} 
+
+}
+
+\caption[Worker Servers CPU and Memory Utilization]{Worker Servers CPU and Memory Utilization}\label{fig:worker}
+\end{figure}
+\end{Schunk}
+
+The GCP job finished in 16 minutes.
+
+Let's review the model training and validation curves, which will help
+us to evaluate how well the model is fitted and if there are ways to
+improve it. According to figure \ref{fig:loss} training and validation
+accuracy are nicely converging, which is a sign that the model has
+learned the data well. Both curves lay in close proximity and follow
+each other. It means the the training and validation sets are
+representative, meaning they contain all the features of the original
+dataset.The training and validation loss curves on the right hand side,
+have converged and plateaued. It means that further training will most
+likely lead to overfitting.
+
+\begin{Schunk}
+\begin{figure}[H]
+
+{\centering \includegraphics[width=1\linewidth]{../images/Audio_DNN_train_val_curves} 
+
+}
+
+\caption[Model Training and Validation Curves]{Model Training and Validation Curves}\label{fig:loss}
+\end{figure}
+\end{Schunk}
+
+Lastly we are going to evaluate the confusion matrix of the classifier.
+And it is quite impressive! All averaged F1 scores show \textbf{85\%}
+accuracy on a training set. This is quite remarkable considering how
+simple the classifier model is. Power of transfer learning in action!
+The least successful categories are \texttt{Children\ Playing},
+\texttt{Dog\ Bark} and \texttt{Steet\ Music}. All scored i mid/high
+seventies. The lower ability to classy \texttt{Children\ Playing} and
+\texttt{Street\ Music} could be explained by the complexity of the
+sound. Probably more samples would help to improve the classifier. We
+are not sure why \texttt{Dog\ Bark} category has a lower score.
+
+\begin{Schunk}
+\begin{figure}[H]
+
+{\centering \includegraphics[width=1\linewidth]{../images/Audio_DNN_heatmap} 
+
+}
+
+\caption[Classifier Confusion Matrix]{Classifier Confusion Matrix}\label{fig:heat}
+\end{figure}
+\end{Schunk}
+
+\begin{verbatim}
+              precision    recall  f1-score   support
+
+Air Conditioner    0.83      0.93      0.87      3977
+    Car Horn       0.95      0.78      0.86      1998
+Children Playing   0.69      0.77      0.73      4009
+    Dog Bark       0.91      0.65      0.76      3084
+    Drilling       0.89      0.88      0.88      3492
+Engine Idling      0.89      0.93      0.91      3877
+    Gun Shot       0.85      0.89      0.87      1038
+  Jackhammer       0.95      0.92      0.94      3571
+       Siren       0.92      0.90      0.91      3656
+Street Music       0.75      0.79      0.77      4023
+
+   micro avg       0.85      0.85      0.85     32725
+   macro avg       0.86      0.84      0.85     32725
+weighted avg       0.85      0.85      0.85     32725
+\end{verbatim}
+
+\hypertarget{conclusion}{%
+\section{Conclusion}\label{conclusion}}
+
+Our research proves that having even modest computational resources it
+is possible to classify urban sounds with the high degree of accuracy.
+Through exploration of almost 9000 audio samples we have extracted
+useful features, which we employed to train the sound classification
+model. We have confirmed that the data augmentation is an excellent tool
+to balance the unbalanced datasets or even boost the size of the small
+dataset. We have demonstrated the power of the transfer learning, which
+makes training o high accuracy models with limited resources possible.
+
+\bibliography{RJreferences}
+
+\hypertarget{note-from-the-authors}{%
+\section{Note from the Authors}\label{note-from-the-authors}}
+
+This file was generated using
+\href{https://github.com/rstudio/rticles}{\emph{The R Journal} style
+article template}, additional information on how to prepare articles for
+submission is here -
+\href{https://journal.r-project.org/share/author-guide.pdf}{Instructions
+for Authors}. The article itself is an executable R Markdown file that
+could be
+\href{https://github.com/ivbsoftware/big-data-final-2/blob/master/docs/R_Journal/big-data-final-2/}{downloaded
+from Github} with all the necessary artifacts.
+
+
+\address{%
+Vadim Spirkov\\
+York University School of Continuing Studies\\
+\\
+}
+
+
+\address{%
+Murlidhar Loka\\
+York University School of Continuing Studies\\
+\\
+}
+
+

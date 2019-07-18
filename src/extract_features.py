@@ -1,7 +1,7 @@
 import sys
 from sklearn.externals import joblib
 import time
-from extract_features_utils import extractFeatures
+from utils import extractFeatures
 import glob
 
 print(sys.argv)

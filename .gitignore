@@ -1,4 +1,6 @@
 data/**
 src/.ipynb_checkpoints/**
 src/__pycache__/**
+src/cpjob/trainer/__pycache__/**
 src/.idea/**
+tensorboard/*
